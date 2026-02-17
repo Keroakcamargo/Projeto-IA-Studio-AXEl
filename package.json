@@ -16,13 +16,13 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.13.3",
-    "firebase": "^10.7.1"
+    "firebase": "^10.7.1",
+    "vite": "^6.0.1",
+    "@vitejs/plugin-react": "^4.3.4"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.1"
+    "typescript": "^5.7.2"
   }
 }
