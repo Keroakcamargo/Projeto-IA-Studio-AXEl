@@ -5,8 +5,8 @@ import {
   Key, Mail, Loader2, CheckCircle, AlertCircle, Sparkles
 } from 'lucide-react';
 import { auth, db } from '../services/firebase';
-import { updateProfile, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { updateProfile, updatePassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { User } from '../types';
 
 interface ProfileSettingsProps {

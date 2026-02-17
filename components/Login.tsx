@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Mail, Lock, LogIn, Chrome, Loader2, Sparkles, UserPlus, AlertCircle, Cpu } from 'lucide-react';
 import { auth, googleProvider } from '../services/firebase';
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);

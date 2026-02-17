@@ -6,12 +6,12 @@ import {
   Lightbulb, User as UserIcon, Headset, Shield, Cpu
 } from 'lucide-react';
 import { auth, db } from './services/firebase';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { 
   collection, query, onSnapshot, addDoc, 
   Timestamp, doc, getDoc, setDoc, deleteDoc,
   orderBy
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "firebase/firestore";
 
 import Dashboard from './components/Dashboard';
 import ChatBot, { ChatBotHandle } from './components/ChatBot';

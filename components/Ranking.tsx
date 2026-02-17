@@ -8,7 +8,7 @@ import {
   Sparkles, BarChart3, AlertCircle, ShieldOff
 } from 'lucide-react';
 import { db } from '../services/firebase';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs } from "firebase/firestore";
 import { RankingUser, ActivityType, User } from '../types';
 
 const ACTIVITY_WEIGHTS: Record<ActivityType, number> = {

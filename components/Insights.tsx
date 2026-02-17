@@ -11,7 +11,7 @@ import { db } from '../services/firebase';
 import { 
   collection, query, onSnapshot, addDoc, 
   doc, updateDoc, deleteDoc, Timestamp, orderBy, getDocs 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "firebase/firestore";
 import { getGeminiPro } from '../services/geminiService';
 import { User, Insight, InsightSource, InsightNote } from '../types';
 
