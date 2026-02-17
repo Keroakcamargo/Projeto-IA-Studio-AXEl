@@ -1,0 +1,7 @@
+{
+  "name": "Axel Sales Assistant AI",
+  "description": "Supervisora e Mentora Neural de Alta Performance para times de vendas de elite.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
