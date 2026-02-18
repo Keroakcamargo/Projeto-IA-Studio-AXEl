@@ -1,3 +1,8 @@
-
 runConfig:
   runCommand: npm run start
+env:
+  - variable: google_api_key
+    value: AIzaSyBF4v5JnaLIRfWA4M4lXDJ7tOlEK06Xu9A
+    availability:
+      - BUILD
+      - RUNTIME
