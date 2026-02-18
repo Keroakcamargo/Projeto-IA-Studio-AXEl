@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Lightbulb, Plus, BookOpen, PencilLine, FileText, 
@@ -183,15 +182,19 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
       if (source.type === 'file' && source.mimeType) {
         response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          contents: [
-            { inlineData: { data: source.content, mimeType: source.mimeType } },
-            { text: "Resuma este material de forma executiva para um vendedor." }
-          ]
+          contents: [{ 
+            parts: [
+              { inlineData: { data: source.content, mimeType: source.mimeType } },
+              { text: "Resuma este material de forma executiva para um vendedor." }
+            ] 
+          }]
         });
       } else {
         response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          contents: `Resuma estrategicamente: ${source.content}`,
+          contents: [{ 
+            parts: [{ text: `Resuma estrategicamente: ${source.content}` }] 
+          }],
         });
       }
 
@@ -217,7 +220,9 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: `Você é Axel. Use os resumos como base:\n\n${context}\n\nPERGUNTA: ${text}`,
+        contents: [{ 
+          parts: [{ text: `Você é Axel. Use os resumos como base:\n\n${context}\n\nPERGUNTA: ${text}` }] 
+        }],
       });
       setChatHistory(prev => [...prev, { role: 'model', text: response.text || "Erro na consulta." }]);
     } catch (e) { console.error(e); } finally {
@@ -285,8 +290,10 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [
-          { inlineData: { data: base64, mimeType: 'audio/webm' } },
-          { text: "Transcreva este áudio para uma nota profissional." }
+          { parts: [
+            { inlineData: { data: base64, mimeType: 'audio/webm' } },
+            { text: "Transcreva este áudio para uma nota profissional." }
+          ]}
         ]
       });
       if (activeNote) {

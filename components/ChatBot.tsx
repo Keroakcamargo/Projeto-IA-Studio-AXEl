@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Bot, User, Loader2, Instagram, Mic2, Phone, Hash, CalendarDays, CheckSquare, Users, Mic, Headset, Shield, Sparkles, AlertTriangle } from 'lucide-react';
 import { getGeminiPro, getSystemInstruction } from '../services/geminiService';
@@ -131,13 +130,15 @@ const ChatBot = forwardRef<ChatBotHandle, ChatBotProps>(({ agentConfig, onActivi
         });
       }
 
-      let currentInput: any[] = [{ text }];
+      let currentInput: any = { message: text };
       if (files && files.length > 0) {
+        const parts: any[] = [{ text }];
         files.forEach(f => {
-          currentInput.push({
+          parts.push({
             inlineData: { data: f.data.split(',')[1] || f.data, mimeType: f.mimeType }
           });
         });
+        currentInput = { message: parts };
       }
 
       const MAX_TURNS = 5;
@@ -145,14 +146,15 @@ const ChatBot = forwardRef<ChatBotHandle, ChatBotProps>(({ agentConfig, onActivi
 
       while (turn < MAX_TURNS) {
         turn++;
-        const streamResponse = await chatInstanceRef.current.sendMessageStream({ message: currentInput });
+        const streamResponse = await chatInstanceRef.current.sendMessageStream(currentInput);
         let fullText = '';
         let functionCalls: any[] = [];
         let cards: ActivityCardData[] = [];
 
         for await (const chunk of streamResponse) {
-          if (chunk.text) {
-            fullText += chunk.text;
+          const chunkText = chunk.text;
+          if (chunkText) {
+            fullText += chunkText;
             setMessages(prev => {
               const next = [...prev];
               next[next.length - 1] = { ...next[next.length - 1], text: fullText.replace(/\*/g, '') };
@@ -174,7 +176,7 @@ const ChatBot = forwardRef<ChatBotHandle, ChatBotProps>(({ agentConfig, onActivi
               return { functionResponse: { id: fc.id, name: fc.name, response: { result: `SUCESSO. Data: ${date}.` } } };
             }
             if (fc.name === 'showStatusCards') {
-              const { types } = fc.args;
+              const { types } = fc.args as any;
               types.forEach((t: ActivityType) => cards.push({ type: t, count: todayStats[t] || 0, goal: goals.targets[t]?.daily || 0 }));
               return { functionResponse: { id: fc.id, name: fc.name, response: { result: `SUCESSO.` } } };
             }
@@ -189,13 +191,13 @@ const ChatBot = forwardRef<ChatBotHandle, ChatBotProps>(({ agentConfig, onActivi
               return next;
             });
           }
-          currentInput = results;
+          currentInput = { message: results };
         } else {
           break;
         }
       }
     } catch (e: any) {
-      console.error(e);
+      console.error("Erro na API Gemini:", e);
       const isQuotaError = e.message?.includes('429') || e.status === 429;
       setMessages(prev => {
           const next = [...prev];
@@ -203,7 +205,7 @@ const ChatBot = forwardRef<ChatBotHandle, ChatBotProps>(({ agentConfig, onActivi
             ...next[next.length - 1], 
             text: isQuotaError 
               ? "Minha rede neural atingiu o limite de cota temporário. Aguarde um momento para sincronizarmos novamente." 
-              : "Axel encontrou um erro na rede neural. Tente novamente." 
+              : `Axel encontrou um erro na rede neural. (${e.message || 'Erro desconhecido'})` 
           };
           return next;
       });
