@@ -1,13 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { AgentConfig } from "../types";
 
-export const getGeminiPro = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.error("ERRO NEURAL: API_KEY não encontrada no ambiente. Verifique o Secret Manager no Console do Firebase.");
-  }
-  return new GoogleGenAI({ apiKey: apiKey || '' });
-};
+// Inicialização direta seguindo estritamente as diretrizes do SDK
+export const getGeminiPro = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const now = new Date();
@@ -15,7 +10,7 @@ export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   const knowledgeSummary = agentConfig.knowledge.files.map(f => f.name).join(', ') || 'Nenhum manual operacional anexado.';
-  const diverseSummary = agentConfig.knowledge.diverseKnowledge.map(f => f.name).join(', ') || 'Sem materiais de estudo adicionais.';
+  const diverseSummary = agentConfig.knowledge.diverseKnowledge?.map(f => f.name).join(', ') || 'Sem materiais de estudo adicionais.';
   const linksSummary = agentConfig.knowledge.links.map(l => l.url).join(', ') || 'Sem links de referência.';
 
   return `
