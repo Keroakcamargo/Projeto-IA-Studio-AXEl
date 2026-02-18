@@ -1,3 +1,5 @@
+kind: AppHostingConfig
+schemaVersion: v1
 runConfig:
   runCommand: npm run start
 env:

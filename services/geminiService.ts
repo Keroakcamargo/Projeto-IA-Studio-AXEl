@@ -1,8 +1,13 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { AgentConfig } from "../types";
 
-export const getGeminiPro = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const getGeminiPro = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("ERRO NEURAL: API_KEY não encontrada no ambiente. Verifique o Secret Manager no Console do Firebase.");
+  }
+  return new GoogleGenAI({ apiKey: apiKey || '' });
+};
 
 export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const now = new Date();
