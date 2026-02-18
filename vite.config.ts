@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Injeta a API_KEY do Secret Manager no código compilado do navegador
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
+    // Substitui process.env.API_KEY pela chave real durante o build
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || 'AIzaSyA6CuQsIu3qyn453uKKROxDY6tlWZmFP6o'),
   },
   server: {
     port: Number(process.env.PORT) || 8080,

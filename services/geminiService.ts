@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { AgentConfig } from "../types";
 
 // Inicialização direta seguindo estritamente as diretrizes do SDK
-export const getGeminiPro = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const getGeminiPro = () => new GoogleGenAI({ apiKey: String(process.env.API_KEY) });
 
 export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const now = new Date();

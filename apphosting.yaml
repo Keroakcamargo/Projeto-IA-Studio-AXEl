@@ -4,7 +4,7 @@ runConfig:
   runCommand: npm run start
 env:
   - variable: API_KEY
-    secret: API_KEY
+    value: AIzaSyA6CuQsIu3qyn453uKKROxDY6tlWZmFP6o
     availability:
       - BUILD
       - RUNTIME
