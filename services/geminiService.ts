@@ -1,17 +1,15 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { AgentConfig } from "../types";
 
-// Função para obter a API_KEY de forma segura
-const getApiKey = () => {
-  const key = process.env.API_KEY;
-  if (!key || key === 'undefined') {
-    // Fallback apenas para desenvolvimento local se necessário
-    return 'AIzaSyA6CuQsIu3qyn453uKKROxDY6tlWZmFP6o';
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+// Always use new GoogleGenAI({apiKey: process.env.API_KEY})
+export const getGeminiPro = () => {
+  if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable is not set.");
   }
-  return key;
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
-
-export const getGeminiPro = () => new GoogleGenAI({ apiKey: getApiKey() });
 
 export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const now = new Date();
@@ -50,6 +48,7 @@ export const getSystemInstruction = (agentConfig: AgentConfig) => {
   `;
 };
 
+// Implement manually follow guidelines for decoding base64
 export function decode(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -60,6 +59,7 @@ export function decode(base64: string) {
   return bytes;
 }
 
+// Implement manually follow guidelines for encoding bytes to base64
 export function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -69,13 +69,14 @@ export function encode(bytes: Uint8Array) {
   return btoa(binary);
 }
 
+// Fixed decodeAudioData to exactly match the provided PCM decoding example
 export async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
   sampleRate: number,
   numChannels: number,
 ): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
+  const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
 

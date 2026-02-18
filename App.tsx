@@ -71,6 +71,7 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
+    // Correct Firebase Auth modular usage
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const userData: User = {
@@ -99,7 +100,6 @@ const App: React.FC = () => {
           const data = snap.data();
           if (data.goals) setGoals(data.goals);
           
-          // Garantir que a estrutura nova exista ao carregar do banco
           if (data.agentConfig) {
             const config = data.agentConfig;
             if (!config.knowledge.diverseKnowledge) {
@@ -119,6 +119,7 @@ const App: React.FC = () => {
       } catch (err) { console.error(err); }
     };
     loadUserData();
+    // Correct Firebase Firestore modular usage
     const activitiesCol = collection(db, 'users', currentUser.uid, 'activities');
     const q = query(activitiesCol, orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {

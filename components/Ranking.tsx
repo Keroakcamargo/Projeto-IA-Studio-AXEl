@@ -92,7 +92,6 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
         const userData = userDoc.data();
         const userId = userDoc.id;
         
-        // Tentamos buscar atividades. Se falhar para outros usuários, ignoramos e seguimos.
         let totalPoints = 0;
         let prevPeriodPoints = 0;
         let activitiesCount = 0;
@@ -119,7 +118,6 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
             }
           });
         } catch (e) {
-          // Se não tiver permissão para ver atividades de outros, só somamos os próprios
           if (userId !== currentUser.uid) continue;
         }
 
