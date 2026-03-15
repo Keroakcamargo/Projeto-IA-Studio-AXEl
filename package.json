@@ -1,4 +1,3 @@
-
 {
   "name": "axel-sales-assistant",
   "private": true,
@@ -7,18 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview --port 8080 --host 0.0.0.0",
-    "start": "vite preview --port 8080 --host 0.0.0.0"
+    "lint": "tsc --noEmit",
+    "preview": "vite preview --port 3000 --host 0.0.0.0",
+    "start": "vite preview --port 3000 --host 0.0.0.0"
   },
   "dependencies": {
-    "@google/genai": "^1.41.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "firebase": "^10.7.1",
     "lucide-react": "^0.460.0",
+    "motion": "^12.34.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.13.3",
-    "firebase": "^10.7.1",
-    "vite": "^6.0.1",
-    "@vitejs/plugin-react": "^4.3.4"
+    "vite": "^6.0.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

@@ -9,7 +9,6 @@ import {
   collection, query, onSnapshot, addDoc, 
   doc, updateDoc, deleteDoc, Timestamp, orderBy
 } from "firebase/firestore";
-import { getGeminiPro } from '../services/geminiService';
 import { User, Insight, InsightSource, InsightNote } from '../types';
 
 interface InsightsProps {
@@ -156,25 +155,7 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
   const generateSummary = async (source: InsightSource) => {
     if (!activeInsight || !currentUser?.uid) return;
     try {
-      const ai = getGeminiPro();
-      let response;
-      if (source.type === 'file' && source.mimeType) {
-        response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: { 
-            parts: [
-              { inlineData: { data: source.content, mimeType: source.mimeType } },
-              { text: "Resuma este material de forma executiva para um vendedor." }
-            ] 
-          }
-        });
-      } else {
-        response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: { parts: [{ text: `Resuma estrategicamente: ${source.content}` }] },
-        });
-      }
-      const summary = response.text || "Conteúdo processado.";
+      const summary = "Resumo gerado (IA desativada).";
       await updateDoc(doc(db, 'users', currentUser.uid, 'notebooks', activeInsight.id, 'sources', source.id), { summary });
     } catch (e) { 
       console.error(e);
@@ -188,13 +169,7 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
     setChatHistory(prev => [...prev, { role: 'user', text }]);
     setIsAILoading(true);
     try {
-      const ai = getGeminiPro();
-      const context = sources.map(s => `FONTE [${s.name}]: ${s.summary || 'Em processamento.'}`).join('\n\n');
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: { parts: [{ text: `Você é Axel. Use os resumos como base:\n\n${context}\n\nPERGUNTA: ${text}` }] },
-      });
-      setChatHistory(prev => [...prev, { role: 'model', text: response.text || "Erro na consulta." }]);
+      setChatHistory(prev => [...prev, { role: 'model', text: "As funções de IA foram desativadas neste aplicativo." }]);
     } catch (e) { 
       console.error(e);
     } finally {
@@ -249,23 +224,8 @@ const Insights: React.FC<InsightsProps> = ({ currentUser }) => {
   const transcribeNoteAudio = async (blob: Blob) => {
     setIsTranscribingNote(true);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.readAsDataURL(blob);
-      });
-      const ai = getGeminiPro();
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: { 
-          parts: [
-            { inlineData: { data: base64, mimeType: 'audio/webm' } },
-            { text: "Transcreva este áudio para uma nota profissional." }
-          ]
-        }
-      });
       if (activeNote) {
-        const trans = response.text || "";
+        const trans = "Áudio gravado (transcrição de IA desativada).";
         const newContent = activeNote.content ? activeNote.content + "\n" + trans : trans;
         setActiveNote({ ...activeNote, content: newContent });
       }

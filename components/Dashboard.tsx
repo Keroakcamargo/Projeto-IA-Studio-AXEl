@@ -4,7 +4,7 @@ import {
   ChevronLeft, ChevronRight, Plus, Instagram, CalendarDays, 
   CheckSquare, Mic2, Users, TrendingUp, Hash, Target, X, 
   ArrowLeft, Calendar, Sparkles, Phone, TrendingDown, 
-  Zap, BrainCircuit, AlertCircle, BarChart3, Layers
+  Zap, BrainCircuit, AlertCircle, BarChart3, Layers, UserPlus
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -37,6 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
     speech: { label: 'Speeches', icon: Mic2, color: 'text-cyan-500', hex: '#06b6d4', bgColor: 'bg-cyan-500/10', emoji: '🎤', subtitle: 'Apresentações/Pitches' },
     ligacoes: { label: 'Ligações', icon: Phone, color: 'text-yellow-500', hex: '#eab308', bgColor: 'bg-yellow-500/10', emoji: '📞', subtitle: 'Chamadas efetuadas' },
     insta_numbers: { label: 'Números Insta', icon: Hash, color: 'text-blue-500', hex: '#3b82f6', bgColor: 'bg-blue-500/10', emoji: '📊', subtitle: 'Métricas gerais' },
+    referidos: { label: 'Referidos', icon: UserPlus, color: 'text-indigo-500', hex: '#6366f1', bgColor: 'bg-indigo-500/10', emoji: '🤝', subtitle: 'Indicações recebidas' },
     meeting_scheduled: { label: 'Reuniões Marcadas', icon: CalendarDays, color: 'text-orange-500', hex: '#f97316', bgColor: 'bg-orange-500/10', emoji: '📅', subtitle: 'Agendamentos' },
     meeting_done: { label: 'Reuniões Realizadas', icon: CheckSquare, color: 'text-emerald-500', hex: '#10b981', bgColor: 'bg-emerald-500/10', emoji: '✅', subtitle: 'Meetings concluídas' }
   };
@@ -72,6 +73,26 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
       return (Object.values(dayData) as number[]).reduce((a: number, b: number) => a + Number(b), 0);
     };
 
+    const getGoalForDate = (type: ActivityType, date: Date, period: 'daily' | 'weekly' | 'monthly') => {
+      const dateKey = date.toISOString().split('T')[0];
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      
+      // Check if date is disabled (OFF)
+      if (goals.disabledDates?.includes(dateKey)) {
+        return 0;
+      }
+
+      if (period === 'daily') {
+        const override = goals.overrides?.find(o => o.type === type && o.date === dateKey);
+        if (override) return override.value;
+      } else if (period === 'monthly') {
+        const override = goals.overrides?.find(o => o.type === type && o.month === monthKey);
+        if (override) return override.value;
+      }
+      
+      return Number(goals.targets[type][period] || 0);
+    };
+
     const curMonthTotal = getMonthTotal(currentMonth, currentYear, 'total');
     const prevMonthDate = new Date(currentYear, currentMonth - 1, 1);
     const prevMonthTotal = getMonthTotal(prevMonthDate.getMonth(), prevMonthDate.getFullYear(), 'total');
@@ -95,9 +116,15 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
     const dailyAverage = curMonthTotal / dayOfMonth;
     const projectedTotal = dailyAverage * daysInMonth;
 
-    const totalMonthlyGoal = (Object.values(goals.targets) as ActivityGoal[]).reduce((acc: number, g: ActivityGoal) => acc + (g.enabled ? Number(g.monthly) : 0), 0);
+    const totalMonthlyGoal = (Object.keys(goals.targets) as ActivityType[]).reduce((acc: number, type: ActivityType) => {
+      const g = goals.targets[type];
+      return acc + (g.enabled ? getGoalForDate(type, now, 'monthly') : 0);
+    }, 0);
     const goalStatus = totalMonthlyGoal > 0 ? (projectedTotal / totalMonthlyGoal) * 100 : 0;
-    const totalDailyGoal = (Object.values(goals.targets) as ActivityGoal[]).reduce((acc: number, g: ActivityGoal) => acc + (g.enabled ? Number(g.daily) : 0), 0);
+    const totalDailyGoal = (Object.keys(goals.targets) as ActivityType[]).reduce((acc: number, type: ActivityType) => {
+      const g = goals.targets[type];
+      return acc + (g.enabled ? getGoalForDate(type, selectedDate, 'daily') : 0);
+    }, 0);
 
     return {
       curMonthTotal,
@@ -179,6 +206,11 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
             return acc;
           }, 0);
           const target = goals.targets[type] as ActivityGoal | undefined;
+          
+          const dateKey = selectedDate.toISOString().split('T')[0];
+          const override = goals.overrides?.find(o => o.type === type && o.date === dateKey);
+          const dailyGoal = override ? override.value : Number(target?.daily || 0);
+          
           const monthlyGoal = Number(target?.monthly || 0);
           const isEnabled = target?.enabled;
           const progress = isEnabled && monthlyGoal > 0 ? Math.min(100, (total / monthlyGoal) * 100) : 0;
@@ -284,7 +316,11 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
             {(Object.entries(activityLabels) as [ActivityType, any][]).map(([type, info]) => {
               const val = activitiesByDate[formatDateKey(selectedDate)]?.[type] || 0;
               const target = goals.targets[type] as ActivityGoal | undefined;
-              const dailyGoal = Number(target?.daily || 0);
+              
+              const dateKey = selectedDate.toISOString().split('T')[0];
+              const override = goals.overrides?.find(o => o.type === type && o.date === dateKey);
+              const dailyGoal = override ? override.value : Number(target?.daily || 0);
+              
               const isEnabled = target?.enabled;
               const isCompleted = isEnabled && val >= dailyGoal && dailyGoal > 0;
               const dailyProgress = isEnabled && dailyGoal > 0 ? Math.min(100, (val / dailyGoal) * 100) : 0;
@@ -300,7 +336,9 @@ const Dashboard: React.FC<DashboardProps> = ({ activities, goals, onAddActivity 
                     <div className="text-left">
                       <p className={`text-[11px] font-black uppercase tracking-tight ${isEnabled ? 'text-slate-200' : 'text-slate-500'}`}>{info.label}</p>
                       {isEnabled && dailyGoal > 0 && (
-                        <p className="text-[9px] text-slate-500 font-bold">META: {dailyGoal}</p>
+                        <p className="text-[9px] text-slate-500 font-bold">
+                          META: {dailyGoal} {override && <span className="text-orange-400 ml-1">(Ajustada)</span>}
+                        </p>
                       )}
                     </div>
                   </div>

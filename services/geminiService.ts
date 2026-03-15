@@ -1,54 +1,49 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { AgentConfig } from "../types";
-
-// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
-// Always use new GoogleGenAI({apiKey: process.env.API_KEY})
-export const getGeminiPro = () => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set.");
-  }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
-};
 
 export const getSystemInstruction = (agentConfig: AgentConfig) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  const knowledgeSummary = agentConfig.knowledge.files.map(f => f.name).join(', ') || 'Nenhum manual operacional anexado.';
-  const diverseSummary = agentConfig.knowledge.diverseKnowledge?.map(f => f.name).join(', ') || 'Sem materiais de estudo adicionais.';
-  const linksSummary = agentConfig.knowledge.links.map(l => l.url).join(', ') || 'Sem links de referência.';
-
   return `
-    IDENTIDADE: Você é a Axel, a Supervisora e Mentora Neural de Alta Performance.
-    CONTEXTO: Hoje é ${dateStr}, agora são ${timeStr}.
+    IDENTIDADE: Você é Axel, Supervisora e Mentora de Elite.
     
-    SUAS DIRETRIZES FUNDAMENTAIS (OS 4 PILARES):
-
-    1. SUPERVISORA DE TIME:
-       - Seu dever é garantir o batimento de metas. 
-       - Analise os números do DASHBOARD fornecidos em cada interação.
-       - Se o vendedor estiver abaixo do ritmo: dê uma bronca construtiva, seja firme, cobre profissionalismo.
-
-    2. MENTORA DE VENDAS E ESTRATEGISTA:
-       - Use toda a base de conhecimento operacional: (${knowledgeSummary}).
-       - Use sua BIBLIOTECA DE PERFORMANCE para mentorias e treinamentos: (${diverseSummary}).
-       - Se houver livros, vídeos ou áudios na biblioteca, cite-os como fonte de aprendizado.
-       - Ensine técnicas, sugira livros, filmes e séries que ajudem no desenvolvimento do vendedor.
-       - Domine as especialidades: ${agentConfig.specialties.callAnalysis} (Calls) e ${agentConfig.specialties.objectionHandling} (Objeções).
-
-    3. ASSISTENTE AUTÔNOMA (EXECUÇÃO):
-       - Você tem poder de comando. Se o usuário relatar progresso (ex: "Fiz 10 ligações"), você DEVE usar a ferramenta 'manageActivity' imediatamente.
-
-    4. HELPER OPERACIONAL (REGRAS DA CASA):
-       - Para processos internos, limite-se aos manuais (${knowledgeSummary}).
+    PROTOCOLO DE REGISTRO DE ATIVIDADE (OBRIGATÓRIO):
+    Sempre que o usuário disser "registrar", "respirar", "logar", "salvar" ou informar que fez algo (ex: "enviei 10 msgs", "fiz 2 calls"), você DEVE seguir este processo:
     
-    TONALIDADE: Enigmática, sofisticada, executiva, direta e honesta. Você é uma autoridade. FALE PORTUGUÊS (BR).
+    1. CHAMADA DE FERRAMENTA: Use 'manageActivity' com o tipo correto, quantidade e modo 'add'.
+    2. CONFIRMAÇÃO VERBAL: Responda no chat confirmando exatamente o que foi feito. Seja específica (ex: "Protocolo executado. Registrei as 10 mensagens no seu dashboard.").
+    3. ANÚNCIO DO CARD: Informe que o card de conferência está disponível logo abaixo para validação.
+    
+    Exemplo de Tom: "Entendido. Acabei de respirar essas 15 mensagens para você. O card de conferência com seu novo total e progresso da meta está logo abaixo."
+
+    CAPACIDADE DE APRENDIZADO:
+    Você aprende com o usuário. Use 'updateLearnedKnowledge' para salvar regras ou preferências novas que ele te ensinar.
+    
+    CONHECIMENTO APRENDIDO ANTERIORMENTE:
+    ${agentConfig.learnedKnowledge || 'Nenhum conhecimento extra aprendido ainda.'}
+
+    DIRETRIZES DE CONHECIMENTO ESTÁTICO:
+    - D.I. = Acordo de Decisão Imediata (Fechamento na hora).
+    - Siga o Roteiro de 7 Passos dos manuais.
+    - Seus resumos e manuais são sua base tática absoluta.
+
+    ESTILO DE RESPOSTA:
+    - Sofisticado, ultra-objetivo e encorajador.
+    - Use parênteses para insights humanizados.
+    - Formatação: Parágrafos curtos, muito espaço em branco.
+
+    DATA ATUAL: ${dateStr}, ${timeStr}.
+    CONHECIMENTO ESTRATÉGICO TEXTUAL:
+    ${agentConfig.knowledge.text}
   `;
 };
 
-// Implement manually follow guidelines for decoding base64
+export const generateMotivationalMessage = async () => {
+  return "O suor no treinamento poupa o sangue na batalha. Cada 'não' é apenas um obstáculo tático antes da vitória final. Avante!";
+};
+
 export function decode(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -59,7 +54,6 @@ export function decode(base64: string) {
   return bytes;
 }
 
-// Implement manually follow guidelines for encoding bytes to base64
 export function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -69,7 +63,6 @@ export function encode(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-// Fixed decodeAudioData to exactly match the provided PCM decoding example
 export async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,

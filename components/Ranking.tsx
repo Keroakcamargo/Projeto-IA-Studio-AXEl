@@ -12,26 +12,28 @@ import { collection, getDocs } from "firebase/firestore";
 import { RankingUser, ActivityType, User } from '../types';
 
 const ACTIVITY_WEIGHTS: Record<ActivityType, number> = {
-  meeting_done: 50,
-  meeting_scheduled: 20,
-  speech: 15,
-  ligacoes: 5,
-  insta_follow: 3,
-  insta_msg: 1,
-  insta_numbers: 1
+  speech: 100,
+  referidos: 80,
+  ligacoes: 60,
+  meeting_scheduled: 40,
+  insta_msg: 20,
+  insta_follow: 15,
+  insta_numbers: 10,
+  meeting_done: 5
 };
 
 const activityHeaders: { type: ActivityType, label: string, icon: any, color: string }[] = [
+  { type: 'speech', label: 'Speeches', icon: Mic2, color: 'text-cyan-500' },
+  { type: 'referidos', label: 'Referidos', icon: Users, color: 'text-emerald-500' },
+  { type: 'ligacoes', label: 'Ligações', icon: Phone, color: 'text-yellow-500' },
+  { type: 'meeting_scheduled', label: 'Reuniões Marcadas', icon: CalendarDays, color: 'text-orange-500' },
   { type: 'insta_msg', label: 'MSG Insta', icon: Instagram, color: 'text-pink-500' },
   { type: 'insta_follow', label: 'Follow Insta', icon: Users, color: 'text-purple-500' },
-  { type: 'speech', label: 'Speeches', icon: Mic2, color: 'text-cyan-500' },
-  { type: 'ligacoes', label: 'Ligações', icon: Phone, color: 'text-yellow-500' },
   { type: 'insta_numbers', label: 'Números Insta', icon: Hash, color: 'text-blue-500' },
-  { type: 'meeting_scheduled', label: 'Reuniões Marcadas', icon: CalendarDays, color: 'text-orange-500' },
   { type: 'meeting_done', label: 'Reuniões Realizadas', icon: CheckSquare, color: 'text-emerald-500' },
 ];
 
-type Period = 'day' | 'week' | 'month';
+type Period = 'day' | 'yesterday' | 'week' | 'month' | 'custom';
 
 interface RankingProps {
   currentUser: User;
@@ -43,45 +45,74 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
   const [error, setError] = useState<string | null>(null);
   const [permissionError, setPermissionError] = useState(false);
   const [period, setPeriod] = useState<Period>('month');
+  const [customRange, setCustomRange] = useState({
+    start: new Date().toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
 
   const getDateRanges = (p: Period) => {
     const now = new Date();
     const currentStart = new Date();
+    const currentEnd = new Date();
     const prevStart = new Date();
     const prevEnd = new Date();
 
     if (p === 'day') {
       currentStart.setHours(0, 0, 0, 0);
+      currentEnd.setHours(23, 59, 59, 999);
       prevStart.setDate(prevStart.getDate() - 1);
       prevStart.setHours(0, 0, 0, 0);
       prevEnd.setDate(prevEnd.getDate() - 1);
+      prevEnd.setHours(23, 59, 59, 999);
+    } else if (p === 'yesterday') {
+      currentStart.setDate(currentStart.getDate() - 1);
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd.setDate(currentEnd.getDate() - 1);
+      currentEnd.setHours(23, 59, 59, 999);
+      
+      prevStart.setDate(prevStart.getDate() - 2);
+      prevStart.setHours(0, 0, 0, 0);
+      prevEnd.setDate(prevEnd.getDate() - 2);
       prevEnd.setHours(23, 59, 59, 999);
     } else if (p === 'week') {
       const day = now.getDay();
       currentStart.setDate(now.getDate() - day);
       currentStart.setHours(0, 0, 0, 0);
+      currentEnd.setHours(23, 59, 59, 999);
+
       prevStart.setDate(currentStart.getDate() - 7);
       prevStart.setHours(0, 0, 0, 0);
       prevEnd.setDate(currentStart.getDate() - 1);
       prevEnd.setHours(23, 59, 59, 999);
-    } else {
+    } else if (p === 'month') {
       currentStart.setDate(1);
       currentStart.setHours(0, 0, 0, 0);
+      currentEnd.setHours(23, 59, 59, 999);
+
       prevStart.setMonth(prevStart.getMonth() - 1);
       prevStart.setDate(1);
       prevStart.setHours(0, 0, 0, 0);
       prevEnd.setDate(0);
       prevEnd.setHours(23, 59, 59, 999);
+    } else if (p === 'custom') {
+      const start = new Date(customRange.start + 'T00:00:00');
+      const end = new Date(customRange.end + 'T23:59:59');
+      currentStart.setTime(start.getTime());
+      currentEnd.setTime(end.getTime());
+
+      const diff = currentEnd.getTime() - currentStart.getTime();
+      prevStart.setTime(currentStart.getTime() - diff - 1000);
+      prevEnd.setTime(currentStart.getTime() - 1000);
     }
 
-    return { currentStart, prevStart, prevEnd };
+    return { currentStart, currentEnd, prevStart, prevEnd };
   };
 
   const fetchRankingData = async () => {
     setLoading(true);
     setError(null);
     setPermissionError(false);
-    const { currentStart, prevStart, prevEnd } = getDateRanges(period);
+    const { currentStart, currentEnd, prevStart, prevEnd } = getDateRanges(period);
 
     try {
       const usersSnap = await getDocs(collection(db, 'users'));
@@ -92,11 +123,14 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
         const userData = userDoc.data();
         const userId = userDoc.id;
         
+        // Excluir usuário específico do ranking por solicitação
+        if (userData.email === 'keroakscamargo@gmail.com') continue;
+        
         let totalPoints = 0;
         let prevPeriodPoints = 0;
         let activitiesCount = 0;
         const activityDetails: Record<ActivityType, number> = {
-          insta_msg: 0, insta_follow: 0, speech: 0, ligacoes: 0,
+          insta_msg: 0, insta_follow: 0, speech: 0, ligacoes: 0, referidos: 0,
           insta_numbers: 0, meeting_scheduled: 0, meeting_done: 0
         };
 
@@ -109,7 +143,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
             const weight = ACTIVITY_WEIGHTS[type] || 1;
             const timestamp = act.timestamp?.toDate ? act.timestamp.toDate() : new Date(act.timestamp);
 
-            if (timestamp >= currentStart) {
+            if (timestamp >= currentStart && timestamp <= currentEnd) {
               totalPoints += count * weight;
               activitiesCount += count;
               activityDetails[type] = (activityDetails[type] || 0) + count;
@@ -159,7 +193,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
 
   useEffect(() => {
     fetchRankingData();
-  }, [period]);
+  }, [period, customRange.start, customRange.end]);
 
   const topThree = useMemo(() => users.slice(0, 3), [users]);
   const teamAverage = useMemo(() => {
@@ -222,22 +256,48 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
           </p>
         </div>
         
-        <div className="flex bg-slate-900/40 p-1.5 rounded-2xl border border-slate-800 shadow-xl">
-           {(['day', 'week', 'month'] as Period[]).map(p => (
+        <div className="flex flex-wrap items-center bg-slate-900/40 p-1.5 rounded-2xl border border-slate-800 shadow-xl gap-1">
+           {(['day', 'yesterday', 'week', 'month', 'custom'] as Period[]).map(p => (
              <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                 period === p 
                 ? 'bg-cyan-600 text-white shadow-[0_0_20px_rgba(8,145,178,0.3)]' 
                 : 'text-slate-500 hover:text-slate-300'
               }`}
              >
-               {p === 'day' ? 'Hoje' : p === 'week' ? 'Semana' : 'Mês'}
+               {p === 'custom' && <CalendarDays size={14} />}
+               {p === 'day' ? 'Hoje' : p === 'yesterday' ? 'Ontem' : p === 'week' ? 'Semana' : p === 'month' ? 'Mês' : 'Personalizado'}
              </button>
            ))}
         </div>
       </div>
+
+      {/* Seletor de Data Customizada */}
+      {period === 'custom' && (
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 bg-[#0b1222]/60 p-6 rounded-3xl border border-slate-800/50 animate-in slide-in-from-top-4 duration-500">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Início</label>
+            <input 
+              type="date" 
+              value={customRange.start}
+              onChange={(e) => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-white focus:outline-none focus:border-cyan-500 transition-colors"
+            />
+          </div>
+          <div className="w-4 h-px bg-slate-800 mt-5 hidden md:block"></div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Fim</label>
+            <input 
+              type="date" 
+              value={customRange.end}
+              onChange={(e) => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+              className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-white focus:outline-none focus:border-cyan-500 transition-colors"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Pódio Visual */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pt-12 max-w-5xl mx-auto w-full min-h-[500px]">
@@ -443,7 +503,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser }) => {
          <div className="flex items-center gap-4">
             <AlertCircle size={20} className="text-cyan-400" />
             <p className="text-xs text-slate-400 max-w-2xl font-medium leading-relaxed">
-               A Axel analisa a performance individual comparando o período atual (<span className="text-white font-bold">{period === 'day' ? 'hoje' : period === 'week' ? 'esta semana' : 'este mês'}</span>) com o equivalente anterior. O benchmark "Elite" indica vendedores performando 15% acima da média do time.
+               A Axel analisa a performance individual comparando o período atual (<span className="text-white font-bold">{period === 'day' ? 'hoje' : period === 'yesterday' ? 'ontem' : period === 'week' ? 'esta semana' : period === 'month' ? 'este mês' : 'período selecionado'}</span>) com o equivalente anterior. O benchmark "Elite" indica vendedores performando 15% acima da média do time.
             </p>
          </div>
          <button onClick={fetchRankingData} className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">

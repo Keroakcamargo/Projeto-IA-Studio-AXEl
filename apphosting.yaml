@@ -1,10 +1,2 @@
-kind: AppHostingConfig
-schemaVersion: v1
 runConfig:
   runCommand: npm run start
-env:
-  - variable: API_KEY
-    value: AIzaSyA6CuQsIu3qyn453uKKROxDY6tlWZmFP6o
-    availability:
-      - BUILD
-      - RUNTIME

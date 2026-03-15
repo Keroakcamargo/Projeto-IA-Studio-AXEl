@@ -4,6 +4,7 @@ export type ActivityType =
   | 'insta_msg' 
   | 'insta_follow' 
   | 'speech'
+  | 'referidos'
   | 'ligacoes'
   | 'insta_numbers' 
   | 'meeting_scheduled' 
@@ -18,9 +19,21 @@ export interface ActivityGoal {
   enabled: boolean; 
 }
 
+export interface GoalOverride {
+  id: string;
+  type: ActivityType;
+  date?: string; // ISO date string for daily override
+  week?: string; // YYYY-Www for weekly override
+  month?: string; // YYYY-MM for monthly override
+  value: number;
+  note?: string;
+}
+
 export interface SalesGoals {
   targets: Record<ActivityType, ActivityGoal>;
   activeDays: DayOfWeek[];
+  overrides?: GoalOverride[];
+  disabledDates?: string[]; // Array of ISO date strings (YYYY-MM-DD)
 }
 
 export interface SalesActivity {
@@ -74,6 +87,7 @@ export interface AgentConfig {
   name: string;
   description: string;
   instructions: string;
+  learnedKnowledge?: string; // NOVO: Conhecimento aprendido via chat
   knowledge: {
     text: string;
     files: KnowledgeFile[];
@@ -129,4 +143,9 @@ export interface Insight {
   sources: InsightSource[];
   notes: InsightNote[];
   createdAt: Date;
+}
+
+declare global {
+  interface Window {
+  }
 }
